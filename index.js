@@ -32,9 +32,6 @@ export default async function handler(req, res) {
       });
       return;
     }
-      });
-      return;
-    }
 
     // Endpoint para consultar processo
     if (url.pathname.startsWith('/api/processo/')) {
