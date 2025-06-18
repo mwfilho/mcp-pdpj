@@ -3,9 +3,9 @@
   "builds": [
     { "src": "index.js", "use": "@vercel/node" }
   ],
-  "env": {
-    "PDPJ_CPF": "@PDPJ_CPF",
-    "PDPJ_SENHA": "@PDPJ_SENHA",
-    "PDPJ_CLIENT_ID": "@PDPJ_CLIENT_ID"
+  "functions": {
+    "index.js": {
+      "runtime": "@vercel/node@3"
+    }
   }
 }
