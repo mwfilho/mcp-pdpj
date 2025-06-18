@@ -1,15 +1,21 @@
-import { FastMCP } from './dist/FastMCP.js';
 import { consultarProcesso, listarDocumentos } from './tools/pdpj.js';
 
-const mcp = new FastMCP('MCP-PDPJ');
-mcp.addTool(consultarProcesso);
-mcp.addTool(listarDocumentos);
-
-// Para Vercel, vamos usar uma abordagem diferente
-// Vercel não suporta servidores MCP nativamente, então vamos criar uma API simples
+// Para Vercel, vamos usar uma abordagem serverless simples
+// Removemos a dependência do FastMCP que pode estar causando problemas
 
 export default async function handler(req, res) {
   try {
+    // Adicionar headers CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+      res.status(200).end();
+      return;
+    }
+
     const url = new URL(req.url, `http://${req.headers.host}`);
     
     // Endpoint de informações sobre o servidor
@@ -21,7 +27,11 @@ export default async function handler(req, res) {
           '/api/processo/:numero': 'Consultar processo específico',
           '/api/documentos/:numero': 'Listar documentos de um processo'
         },
-        version: '1.0.0'
+        version: '1.0.0',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
       });
       return;
     }
