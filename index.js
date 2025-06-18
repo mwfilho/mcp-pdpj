@@ -1,7 +1,9 @@
-import { consultarProcesso, listarDocumentos } from './tools/pdpj.js';
-
-// Para Vercel, vamos usar uma abordagem serverless simples
-// Removemos a dependência do FastMCP que pode estar causando problemas
+// Importação simples para evitar problemas de dependência
+import('./tools/pdpj.js').then(module => {
+  // Módulo carregado dinamicamente
+}).catch(err => {
+  console.error('Error loading pdpj module:', err);
+});
 
 export default async function handler(req, res) {
   try {
@@ -33,36 +35,48 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Endpoint para consultar processo
-    if (url.pathname.startsWith('/api/processo/')) {
-      const numero = url.pathname.split('/').pop();
-      if (!numero) {
-        res.status(400).json({ error: 'Número do processo é obrigatório' });
-        return;
-      }
-      
-      const resultado = await consultarProcesso.run({ numero });
-      res.status(200).json(resultado);
-      return;
-    }
-
-    // Endpoint para listar documentos
-    if (url.pathname.startsWith('/api/documentos/')) {
-      const numero = url.pathname.split('/').pop();
-      if (!numero) {
-        res.status(400).json({ error: 'Número do processo é obrigatório' });
-        return;
-      }
-      
-      const resultado = await listarDocumentos.run({ numero });
-      res.status(200).json(resultado);
-      return;
-    }
-
     // Health check
     if (url.pathname === '/health') {
       res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
       return;
+    }
+
+    // Para endpoints de processo, vamos importar dinamicamente
+    if (url.pathname.startsWith('/api/processo/') || url.pathname.startsWith('/api/documentos/')) {
+      try {
+        const { consultarProcesso, listarDocumentos } = await import('./tools/pdpj.js');
+        
+        if (url.pathname.startsWith('/api/processo/')) {
+          const numero = url.pathname.split('/').pop();
+          if (!numero) {
+            res.status(400).json({ error: 'Número do processo é obrigatório' });
+            return;
+          }
+          
+          const resultado = await consultarProcesso.run({ numero });
+          res.status(200).json(resultado);
+          return;
+        }
+
+        if (url.pathname.startsWith('/api/documentos/')) {
+          const numero = url.pathname.split('/').pop();
+          if (!numero) {
+            res.status(400).json({ error: 'Número do processo é obrigatório' });
+            return;
+          }
+          
+          const resultado = await listarDocumentos.run({ numero });
+          res.status(200).json(resultado);
+          return;
+        }
+      } catch (error) {
+        console.error('Error loading PDPJ module:', error);
+        res.status(500).json({ 
+          error: 'Service temporarily unavailable', 
+          details: 'Unable to load PDPJ module'
+        });
+        return;
+      }
     }
 
     // 404 para outras rotas
